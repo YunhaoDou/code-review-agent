@@ -1,0 +1,34 @@
+name: 'Code Review Agent'
+description: 'Multi-step code review agent on Anthropic Tool Use. Posts review comments on PRs automatically.'
+author: 'Yunhao Dou'
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  anthropic-api-key:
+    description: 'Anthropic API key'
+    required: true
+  github-token:
+    description: 'GitHub token (use ${{ secrets.GITHUB_TOKEN }})'
+    required: true
+    default: ${{ github.token }}
+  model:
+    description: 'Claude model to use'
+    required: false
+    default: 'claude-sonnet-4-6'
+  max-steps:
+    description: 'Maximum agent steps before forced termination'
+    required: false
+    default: '15'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+    GITHUB_TOKEN: ${{ inputs.github-token }}
+    GITHUB_REPOSITORY: ${{ github.repository }}
+    GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+    MODEL: ${{ inputs.model }}
+    MAX_STEPS: ${{ inputs.max-steps }}
