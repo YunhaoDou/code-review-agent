@@ -1,6 +1,4 @@
 """Smoke tests that don't require network or API keys."""
-import os
-
 from code_review_agent.tools import grep_code, list_directory, read_file
 
 
@@ -15,7 +13,7 @@ def test_tool_schemas_well_formed():
 
 
 def test_read_file_missing():
-    result = read_file.run("/nonexistent/path/here")
+    result = read_file.run("nonexistent/path/here")
     assert result["ok"] is False
     assert "not found" in result["error"]
 

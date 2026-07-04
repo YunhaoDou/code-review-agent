@@ -1,5 +1,5 @@
 """List a directory, filtering out junk."""
-from pathlib import Path
+from code_review_agent.tools._safety import resolve_in_repo
 
 IGNORE = {
     ".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build",
@@ -22,7 +22,9 @@ TOOL_SCHEMA = {
 
 
 def run(path: str = ".") -> dict:
-    p = Path(path)
+    p = resolve_in_repo(path)
+    if p is None:
+        return {"ok": False, "error": f"path escapes repository root: {path}"}
     if not p.exists():
         return {"ok": False, "error": f"path not found: {path}"}
     if not p.is_dir():

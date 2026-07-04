@@ -1,15 +1,17 @@
-"""Main agent loop.
+"""Main agent loop: orchestrates Claude Tool Use against a PR diff.
 
-Phase 0 skeleton: scaffolds the tool dispatch table and guardrails.
-Phase 1 fills in the actual Anthropic Tool Use loop.
+Three guardrails, checked every turn (see docs/architecture.md):
+  1. max_steps      — hard cap on LLM round-trips
+  2. token budget   — per-turn input cap + cumulative total across the run
+  3. loop detection — same (tool, args) signature repeated back to back
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
 
-from code_review_agent import __version__
 from code_review_agent.client import LLMClient
 from code_review_agent.config import Config
 from code_review_agent.tools import (
@@ -41,33 +43,112 @@ Be specific. Cite file paths and line numbers. Do not post more than 5 comments 
 If the PR looks clean, post one summary comment saying so and stop.
 """
 
+# Loop-detection guardrail: this many identical (tool, args) calls in a row halts the run.
+LOOP_WINDOW = 3
+
 
 class GuardrailViolation(Exception):
     """Raised when the agent loop hits a safety guardrail."""
 
+    def __init__(self, guardrail: str, message: str) -> None:
+        self.guardrail = guardrail
+        super().__init__(message)
+
+
+def _tool_signature(name: str, tool_input: dict) -> str:
+    return f"{name}:{json.dumps(tool_input, sort_keys=True, default=str)}"
+
+
+def _dispatch_tool(name: str, tool_input: dict) -> dict:
+    if name not in TOOLS:
+        return {"ok": False, "error": f"unknown tool: {name}"}
+    _, impl = TOOLS[name]
+    try:
+        return impl(**tool_input)
+    except TypeError as e:
+        return {"ok": False, "error": f"bad arguments for {name}: {e}"}
+    except Exception as e:  # a buggy tool must not crash the whole review run
+        return {"ok": False, "error": f"{name} raised: {e}"}
+
 
 def run_agent(diff: str, config: Config) -> dict:
-    """Execute the agent loop.
-
-    Phase 0: validates wiring + returns a dry-run result.
-    Phase 1: implements the real Tool Use ↔ tool execution loop.
-    """
+    """Execute the full Tool Use loop against a PR diff and return a summary."""
     llm = LLMClient(config)
     tool_schemas = [schema for schema, _ in TOOLS.values()]
 
-    # Phase 0: confirm wiring without burning API tokens
-    return {
-        "ok": True,
-        "phase": "0-scaffold",
-        "config": {
-            "model": config.model,
-            "max_steps": config.max_steps,
-            "tools_registered": list(TOOLS),
-            "repo": config.github_repository,
-            "pr": config.github_pr_number,
-        },
-        "note": "Phase 1 fills in the Tool Use loop. See docs/architecture.md.",
-    }
+    messages: list[dict] = [
+        {"role": "user", "content": f"Here is the PR diff to review:\n\n{diff}"}
+    ]
+
+    steps = 0
+    total_tokens = 0
+    call_signatures: list[str] = []
+    comments_posted = 0
+
+    while True:
+        if steps >= config.max_steps:
+            raise GuardrailViolation("max_steps", f"exceeded max_steps={config.max_steps}")
+
+        response = llm.send(system=SYSTEM_PROMPT, messages=messages, tools=tool_schemas)
+        steps += 1
+
+        usage = getattr(response, "usage", None)
+        input_tokens = getattr(usage, "input_tokens", 0) if usage else 0
+        output_tokens = getattr(usage, "output_tokens", 0) if usage else 0
+
+        if input_tokens > config.max_input_tokens:
+            raise GuardrailViolation(
+                "max_input_tokens",
+                f"single turn used {input_tokens} tokens > max_input_tokens={config.max_input_tokens}",
+            )
+
+        total_tokens += input_tokens + output_tokens
+        if total_tokens > config.max_total_tokens:
+            raise GuardrailViolation(
+                "token_budget",
+                f"cumulative usage {total_tokens} > max_total_tokens={config.max_total_tokens}",
+            )
+
+        messages.append({"role": "assistant", "content": response.content})
+
+        if response.stop_reason != "tool_use":
+            summary = "".join(
+                block.text for block in response.content if getattr(block, "type", None) == "text"
+            )
+            return {
+                "ok": True,
+                "steps": steps,
+                "total_tokens": total_tokens,
+                "comments_posted": comments_posted,
+                "summary": summary,
+            }
+
+        tool_results = []
+        for block in response.content:
+            if getattr(block, "type", None) != "tool_use":
+                continue
+
+            signature = _tool_signature(block.name, block.input)
+            call_signatures.append(signature)
+            if len(call_signatures) >= LOOP_WINDOW and len(set(call_signatures[-LOOP_WINDOW:])) == 1:
+                raise GuardrailViolation(
+                    "loop_detection",
+                    f"'{block.name}' called {LOOP_WINDOW}x in a row with identical arguments",
+                )
+
+            result = _dispatch_tool(block.name, block.input)
+            if block.name == "post_review_comment" and result.get("ok"):
+                comments_posted += 1
+
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": json.dumps(result),
+                }
+            )
+
+        messages.append({"role": "user", "content": tool_results})
 
 
 def main() -> None:
@@ -83,8 +164,13 @@ def main() -> None:
         print("error: no diff provided. Pass a file path or pipe diff to stdin.", file=sys.stderr)
         sys.exit(1)
 
-    result = run_agent(diff, config)
-    print(result)
+    try:
+        result = run_agent(diff, config)
+    except GuardrailViolation as e:
+        print(f"error: guardrail '{e.guardrail}' triggered: {e}", file=sys.stderr)
+        sys.exit(2)
+
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
