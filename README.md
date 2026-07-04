@@ -6,7 +6,7 @@
 
 > A multi-step code-review agent powered by Anthropic Tool Use. Drop it into any repo as a GitHub Action — PRs get reviewed automatically.
 
-**Status**: Phase 0 (scaffold). Phase 1 lands the Tool Use loop.
+**Status**: Tool Use loop + guardrails implemented and unit-tested (Phases 0-2). Not yet run against a live PR or published to Marketplace — see [Roadmap](#roadmap).
 
 ## What it does
 
@@ -80,13 +80,34 @@ Full usage in [docs/usage.md](docs/usage.md).
 
 ## Roadmap
 
-| Phase | What |
-|---|---|
-| 0 | Scaffold + tool schemas + guardrails (done) |
-| 1 | Implement Tool Use loop |
-| 2 | Loop detection + token accounting |
-| 3 | Self-review (dogfood: this action reviews its own PRs) |
-| 4 | Publish to GitHub Marketplace |
+| Phase | What | Status |
+|---|---|---|
+| 0 | Scaffold + tool schemas + guardrails | ✅ done |
+| 1 | Tool Use loop wired to the 5 tools | ✅ done, unit-tested with a mocked Anthropic client |
+| 2 | Loop detection + token accounting | ✅ done — `max_steps`, per-turn + cumulative token budget, identical-call loop detection, all with tests proving they actually trigger |
+| 3 | Self-review (dogfood: this action reviews its own PRs) | ☐ open — needs a real `ANTHROPIC_API_KEY` + a real PR, neither available in dev |
+| 4 | Publish to GitHub Marketplace | ☐ open — repo needs to be public under the real GitHub account; not done here |
+
+**What's genuinely unverified**: the loop has never made a real call to the Anthropic API (no key available in this environment) or posted a comment to a real GitHub PR (no live `GITHUB_TOKEN`/PR). Everything up through the orchestration logic, guardrails, and tool implementations is real code, exercised by real tests — but the live path (Phase 3) needs your credentials to prove end-to-end.
+
+To try it for real:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export GITHUB_TOKEN=ghp_...
+export GITHUB_REPOSITORY=owner/repo
+export GITHUB_PR_NUMBER=123
+curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github.v3.diff" \
+  "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$GITHUB_PR_NUMBER" \
+  | code-review-agent
+```
+
+Marketplace publish checklist (not executed — needs your GitHub identity):
+1. Push this repo to a public `YunhaoDou/code-review-agent` on GitHub
+2. Tag a release (`v1.0.0`) matching the `@v1` reference in the usage example above
+3. On the release page, check "Publish this Action to the GitHub Marketplace"
+4. Pick the `check-circle`/green branding category (already set in `action.yml`)
 
 ## License
 
