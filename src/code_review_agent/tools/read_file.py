@@ -1,5 +1,5 @@
 """Read a file from the checked-out repo with a token-aware truncation."""
-from pathlib import Path
+from code_review_agent.tools._safety import resolve_in_repo
 
 TOOL_SCHEMA = {
     "name": "read_file",
@@ -25,7 +25,9 @@ TOOL_SCHEMA = {
 
 def run(path: str, max_lines: int = 400) -> dict:
     """Execute the tool. Returns {ok, content?, error?}."""
-    p = Path(path)
+    p = resolve_in_repo(path)
+    if p is None:
+        return {"ok": False, "error": f"path escapes repository root: {path}"}
     if not p.exists():
         return {"ok": False, "error": f"file not found: {path}"}
     if not p.is_file():

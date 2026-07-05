@@ -38,7 +38,7 @@ def run(pattern: str, file_type: str | None = None, max_matches: int = 50) -> di
     if out.returncode != 0:
         return {"ok": False, "error": out.stderr.strip() or "ripgrep failed"}
 
-    lines = [l for l in out.stdout.split("\n") if l]
+    lines = [line for line in out.stdout.split("\n") if line]
     matches = []
     for line in lines[:max_matches]:
         parts = line.split(":", 3)
