@@ -44,7 +44,7 @@ Drop `.github/code-review-agent.yml` in your repo to customize:
 
 ```yaml
 provider: deepseek       # or "anthropic"
-model: deepseek-chat     # defaults to the provider's standard model if omitted
+model: deepseek-v4-pro   # defaults to the provider's standard model if omitted (deepseek-v4-flash also available)
 max_steps: 15
 focus_areas:
   - logic bugs

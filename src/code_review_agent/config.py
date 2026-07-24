@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 PROVIDER_DEFAULT_MODEL = {
     "anthropic": "claude-sonnet-4-6",
-    "deepseek": "deepseek-chat",
+    "deepseek": "deepseek-v4-pro",
 }
 
 
@@ -32,7 +32,7 @@ class Config(BaseModel):
     github_pr_number: int
 
     # Model
-    model: str = "deepseek-chat"
+    model: str = "deepseek-v4-pro"
 
     # Agent runtime guardrails
     max_steps: int = 15
