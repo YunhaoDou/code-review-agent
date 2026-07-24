@@ -110,7 +110,11 @@ def run_agent(diff: str, config: Config) -> dict:
                 f"cumulative usage {total_tokens} > max_total_tokens={config.max_total_tokens}",
             )
 
-        messages.append({"role": "assistant", "content": response.content})
+        if response.content:
+            # Skip appending a genuinely empty assistant turn (no text, no tool call) —
+            # some providers produce these (see nudge below), and OpenAI-compatible APIs
+            # reject an assistant message with neither content nor tool_calls set.
+            messages.append({"role": "assistant", "content": response.content})
 
         if response.stop_reason != "tool_use":
             summary = "".join(
