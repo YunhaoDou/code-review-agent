@@ -58,7 +58,11 @@ class Config(BaseModel):
                 f"unknown provider: {provider!r} (expected one of {list(PROVIDER_DEFAULT_MODEL)})"
             )
         data["provider"] = provider
+        if os.environ.get("MODEL"):
+            data["model"] = os.environ["MODEL"]
         data.setdefault("model", PROVIDER_DEFAULT_MODEL[provider])
+        if os.environ.get("MAX_STEPS"):
+            data["max_steps"] = int(os.environ["MAX_STEPS"])
 
         data["anthropic_api_key"] = os.environ.get("ANTHROPIC_API_KEY", "")
         data["deepseek_api_key"] = os.environ.get("DEEPSEEK_API_KEY", "")

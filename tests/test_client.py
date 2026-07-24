@@ -61,6 +61,24 @@ def test_to_openai_tools_converts_anthropic_schema():
     ]
 
 
+def test_to_openai_messages_skips_empty_assistant_turn():
+    """An assistant turn with no blocks must not become {"content": None} —
+    OpenAI-compatible APIs reject a message with neither content nor tool_calls."""
+    messages = [
+        {"role": "user", "content": "Here is the diff"},
+        {"role": "assistant", "content": []},
+        {"role": "user", "content": "try again"},
+    ]
+
+    out = _to_openai_messages("system prompt", messages)
+
+    assert out == [
+        {"role": "system", "content": "system prompt"},
+        {"role": "user", "content": "Here is the diff"},
+        {"role": "user", "content": "try again"},
+    ]
+
+
 def test_to_openai_messages_handles_tool_result_and_tool_use():
     tool_use_block = SimpleNamespace(type="tool_use", name="read_file", input={"path": "a.py"}, id="t1")
     text_block = SimpleNamespace(type="text", text="checking a.py")

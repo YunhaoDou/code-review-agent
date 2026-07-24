@@ -111,7 +111,14 @@ def _to_openai_messages(system: str, messages: list[dict]) -> list[dict]:
             out.append({"role": role, "content": content})
             continue
 
-        if content and isinstance(content[0], dict) and content[0].get("type") == "tool_result":
+        if not content:
+            # An empty block list carries nothing to say — OpenAI-compatible APIs reject
+            # an assistant message with neither content nor tool_calls set, so skip it
+            # rather than emit {"content": None} below. agent.py already avoids appending
+            # these, but this function stays correct standalone.
+            continue
+
+        if isinstance(content[0], dict) and content[0].get("type") == "tool_result":
             for block in content:
                 out.append(
                     {
