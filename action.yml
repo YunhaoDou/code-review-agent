@@ -1,22 +1,29 @@
 name: 'Code Review Agent'
-description: 'Multi-step code review agent on Anthropic Tool Use. Posts review comments on PRs automatically.'
+description: 'Multi-step code review agent on Anthropic/DeepSeek Tool Use. Posts review comments on PRs automatically.'
 author: 'Yunhao Dou'
 branding:
   icon: 'check-circle'
   color: 'green'
 
 inputs:
+  provider:
+    description: 'LLM provider: "deepseek" or "anthropic"'
+    required: false
+    default: 'deepseek'
   anthropic-api-key:
-    description: 'Anthropic API key'
-    required: true
+    description: 'Anthropic API key (required if provider=anthropic)'
+    required: false
+  deepseek-api-key:
+    description: 'DeepSeek API key (required if provider=deepseek)'
+    required: false
   github-token:
     description: 'GitHub token (use ${{ secrets.GITHUB_TOKEN }})'
     required: true
     default: ${{ github.token }}
   model:
-    description: 'Claude model to use'
+    description: 'Model to use (defaults to the provider''s standard model)'
     required: false
-    default: 'claude-sonnet-4-6'
+    default: ''
   max-steps:
     description: 'Maximum agent steps before forced termination'
     required: false
@@ -26,7 +33,9 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
+    LLM_PROVIDER: ${{ inputs.provider }}
     ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+    DEEPSEEK_API_KEY: ${{ inputs.deepseek-api-key }}
     GITHUB_TOKEN: ${{ inputs.github-token }}
     GITHUB_REPOSITORY: ${{ github.repository }}
     GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}

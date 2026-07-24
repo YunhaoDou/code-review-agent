@@ -29,6 +29,11 @@ Option 1: Anthropic Tool Use directly.
 ## Tradeoffs
 
 - If we later need to swap LLM providers, we will rewrite the agent loop. Acceptable.
+  - **Amended by [ADR-0003](0003-deepseek-provider-adapter.md)**: we added a second provider
+    (DeepSeek) without rewriting the loop — the translation lives entirely in `client.py`,
+    which normalizes both providers to the same response shape `agent.py` already expected.
+    The "no framework" decision above still holds; only the "multi-provider is not a goal"
+    tradeoff was wrong.
 - If the tool count grows beyond 10, we may revisit. But we'll likely split into specialized agents instead.
 
 ## Reference

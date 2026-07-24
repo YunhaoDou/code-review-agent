@@ -23,18 +23,28 @@ jobs:
           fetch-depth: 0
       - uses: YunhaoDou/code-review-agent@v1
         with:
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
 ```
 
-2. Add `ANTHROPIC_API_KEY` to the repo's secrets.
+2. Add `DEEPSEEK_API_KEY` to the repo's secrets.
 3. Open a PR — the agent posts comments within ~1 minute.
+
+### Using Anthropic instead
+
+```yaml
+      - uses: YunhaoDou/code-review-agent@v1
+        with:
+          provider: anthropic
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+```
 
 ## Optional config
 
 Drop `.github/code-review-agent.yml` in your repo to customize:
 
 ```yaml
-model: claude-sonnet-4-6
+provider: deepseek       # or "anthropic"
+model: deepseek-chat     # defaults to the provider's standard model if omitted
 max_steps: 15
 focus_areas:
   - logic bugs
@@ -52,7 +62,8 @@ skip_focus_areas:
 ```bash
 pip install -e ".[dev]"
 
-export ANTHROPIC_API_KEY=sk-...
+export DEEPSEEK_API_KEY=sk-...
+# or: export LLM_PROVIDER=anthropic; export ANTHROPIC_API_KEY=sk-ant-...
 export GITHUB_TOKEN=ghp_...
 export GITHUB_REPOSITORY=owner/repo
 export GITHUB_PR_NUMBER=123

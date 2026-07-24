@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](pyproject.toml)
 
-> A multi-step code-review agent powered by Anthropic Tool Use. Drop it into any repo as a GitHub Action — PRs get reviewed automatically.
+> A multi-step code-review agent powered by Tool Use (DeepSeek by default, Anthropic optional). Drop it into any repo as a GitHub Action — PRs get reviewed automatically.
 
 **Status**: Tool Use loop + guardrails implemented and unit-tested (Phases 0-2). Not yet run against a live PR or published to Marketplace — see [Roadmap](#roadmap).
 
@@ -52,10 +52,11 @@ jobs:
           fetch-depth: 0
       - uses: YunhaoDou/code-review-agent@v1
         with:
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
 ```
 
-Add `ANTHROPIC_API_KEY` to your repo's secrets. Open a PR. The agent comments within ~1 minute.
+Add `DEEPSEEK_API_KEY` to your repo's secrets. Open a PR. The agent comments within ~1 minute.
+Prefer Anthropic? Set `provider: anthropic` and `anthropic-api-key:` instead — see [docs/usage.md](docs/usage.md).
 
 Full usage in [docs/usage.md](docs/usage.md).
 
@@ -77,6 +78,7 @@ Full usage in [docs/usage.md](docs/usage.md).
 
 - [ADR-0001: Anthropic Tool Use directly, no LangChain](docs/adr/0001-why-tool-use-not-langchain.md)
 - [ADR-0002: Comments only, never commits](docs/adr/0002-comments-not-commits.md)
+- [ADR-0003: DeepSeek as a second provider, via a normalizing client boundary](docs/adr/0003-deepseek-provider-adapter.md)
 
 ## Roadmap
 
