@@ -120,6 +120,23 @@ def test_total_token_budget_guardrail_triggers(monkeypatch):
     assert exc_info.value.guardrail == "token_budget"
 
 
+def test_empty_end_turn_gets_nudged_once(monkeypatch):
+    """Some providers occasionally end a turn with no text and no tool call
+    (observed with DeepSeek). The loop should nudge once rather than return nothing."""
+    scripted = [
+        fake_response([], "end_turn"),
+        fake_response([text_block("Reviewed. No issues found.")], "end_turn"),
+    ]
+    calls = iter(scripted)
+    monkeypatch.setattr(LLMClient, "send", lambda self, **kw: next(calls))
+
+    result = run_agent("diff --git a/x b/x", make_config())
+
+    assert result["ok"] is True
+    assert result["steps"] == 2
+    assert "no issues" in result["summary"].lower()
+
+
 def test_loop_detection_guardrail_triggers(monkeypatch):
     def identical_call(self, **kw):
         return fake_response(

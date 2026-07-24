@@ -84,6 +84,7 @@ def run_agent(diff: str, config: Config) -> dict:
     total_tokens = 0
     call_signatures: list[str] = []
     comments_posted = 0
+    nudged = False
 
     while True:
         if steps >= config.max_steps:
@@ -115,6 +116,22 @@ def run_agent(diff: str, config: Config) -> dict:
             summary = "".join(
                 block.text for block in response.content if getattr(block, "type", None) == "text"
             )
+            if comments_posted == 0 and not summary.strip() and not nudged:
+                # Some providers occasionally end a turn with empty content and no tool
+                # call after a run of tool_use steps (observed with DeepSeek). One nudge
+                # back into the loop, rather than silently returning nothing.
+                nudged = True
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "You stopped without posting anything. Call post_review_comment "
+                            "exactly once now: a specific issue you found, or a summary saying "
+                            "the PR looks clean."
+                        ),
+                    }
+                )
+                continue
             return {
                 "ok": True,
                 "steps": steps,
