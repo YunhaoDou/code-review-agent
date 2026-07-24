@@ -15,12 +15,12 @@ from code_review_agent.config import Config
 
 
 def make_config(**overrides) -> Config:
-    defaults = dict(
-        anthropic_api_key="test-key",
-        github_token="test-token",
-        github_repository="acme/widgets",
-        github_pr_number=1,
-    )
+    defaults = {
+        "anthropic_api_key": "test-key",
+        "github_token": "test-token",
+        "github_repository": "acme/widgets",
+        "github_pr_number": 1,
+    }
     defaults.update(overrides)
     return Config(**defaults)
 

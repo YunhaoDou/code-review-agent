@@ -67,7 +67,7 @@ def _dispatch_tool(name: str, tool_input: dict) -> dict:
         return impl(**tool_input)
     except TypeError as e:
         return {"ok": False, "error": f"bad arguments for {name}: {e}"}
-    except Exception as e:  # a buggy tool must not crash the whole review run
+    except Exception as e:  # noqa: BLE001 — a buggy tool must not crash the whole review run
         return {"ok": False, "error": f"{name} raised: {e}"}
 
 

@@ -47,7 +47,7 @@ class Config(BaseModel):
     skip_focus_areas: list[str] = ["style nitpicks", "trivial typos"]
 
     @classmethod
-    def from_env(cls, yaml_path: Path | None = None) -> "Config":
+    def from_env(cls, yaml_path: Path | None = None) -> Config:
         data: dict = {}
         if yaml_path and yaml_path.exists():
             data = yaml.safe_load(yaml_path.read_text()) or {}
@@ -68,7 +68,7 @@ class Config(BaseModel):
         data["deepseek_api_key"] = os.environ.get("DEEPSEEK_API_KEY", "")
         data["github_token"] = os.environ.get("GITHUB_TOKEN", "")
         data["github_repository"] = os.environ.get("GITHUB_REPOSITORY", "")
-        data["github_pr_number"] = int(os.environ.get("GITHUB_PR_NUMBER", 0))
+        data["github_pr_number"] = int(os.environ.get("GITHUB_PR_NUMBER", "0"))
 
         key_field = "deepseek_api_key" if provider == "deepseek" else "anthropic_api_key"
         required = [key_field, "github_token", "github_repository"]
