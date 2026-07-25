@@ -15,12 +15,12 @@ from code_review_agent.config import Config
 
 
 def make_config(**overrides) -> Config:
-    defaults = dict(
-        anthropic_api_key="test-key",
-        github_token="test-token",
-        github_repository="acme/widgets",
-        github_pr_number=1,
-    )
+    defaults = {
+        "anthropic_api_key": "test-key",
+        "github_token": "test-token",
+        "github_repository": "acme/widgets",
+        "github_pr_number": 1,
+    }
     defaults.update(overrides)
     return Config(**defaults)
 
@@ -118,6 +118,23 @@ def test_total_token_budget_guardrail_triggers(monkeypatch):
             "diff", make_config(max_steps=100, max_total_tokens=500_000, max_input_tokens=200_000)
         )
     assert exc_info.value.guardrail == "token_budget"
+
+
+def test_empty_end_turn_gets_nudged_once(monkeypatch):
+    """Some providers occasionally end a turn with no text and no tool call
+    (observed with DeepSeek). The loop should nudge once rather than return nothing."""
+    scripted = [
+        fake_response([], "end_turn"),
+        fake_response([text_block("Reviewed. No issues found.")], "end_turn"),
+    ]
+    calls = iter(scripted)
+    monkeypatch.setattr(LLMClient, "send", lambda self, **kw: next(calls))
+
+    result = run_agent("diff --git a/x b/x", make_config())
+
+    assert result["ok"] is True
+    assert result["steps"] == 2
+    assert "no issues" in result["summary"].lower()
 
 
 def test_loop_detection_guardrail_triggers(monkeypatch):

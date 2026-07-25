@@ -46,7 +46,7 @@ def run(command: str = "pytest -q", timeout_seconds: int = 60) -> dict:
         return {"ok": False, "error": f"command not allowed: {bad!r}"}
 
     try:
-        out = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_seconds)
+        out = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_seconds, check=False)
     except FileNotFoundError:
         return {"ok": False, "error": f"binary not found: {argv[0]}"}
     except subprocess.TimeoutExpired:

@@ -27,7 +27,7 @@ def run(pattern: str, file_type: str | None = None, max_matches: int = 50) -> di
     cmd.append(pattern)
 
     try:
-        out = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=20, check=False)
     except FileNotFoundError:
         return {"ok": False, "error": "ripgrep (rg) not installed in this environment"}
     except subprocess.TimeoutExpired:

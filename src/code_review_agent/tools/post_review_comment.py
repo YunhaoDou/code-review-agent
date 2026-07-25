@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
 
 import httpx
 
@@ -24,7 +23,7 @@ TOOL_SCHEMA = {
 }
 
 
-def run(body: str, path: Optional[str] = None, line: Optional[int] = None) -> dict:
+def run(body: str, path: str | None = None, line: int | None = None) -> dict:
     token = os.environ.get("GITHUB_TOKEN")
     repo = os.environ.get("GITHUB_REPOSITORY")
     pr = os.environ.get("GITHUB_PR_NUMBER")
@@ -47,5 +46,5 @@ def run(body: str, path: Optional[str] = None, line: Optional[int] = None) -> di
         r = httpx.post(url, headers=headers, json=payload, timeout=15)
         r.raise_for_status()
         return {"ok": True, "comment_id": r.json().get("id")}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — a failed post must not crash the whole review run
         return {"ok": False, "error": str(e)}

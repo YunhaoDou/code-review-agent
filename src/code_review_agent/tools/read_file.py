@@ -34,7 +34,7 @@ def run(path: str, max_lines: int = 400) -> dict:
         return {"ok": False, "error": f"not a file: {path}"}
     try:
         text = p.read_text(encoding="utf-8", errors="replace")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — a failed read must not crash the whole review run
         return {"ok": False, "error": f"read failed: {e}"}
 
     lines = text.split("\n")

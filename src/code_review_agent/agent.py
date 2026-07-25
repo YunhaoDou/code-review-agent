@@ -67,7 +67,7 @@ def _dispatch_tool(name: str, tool_input: dict) -> dict:
         return impl(**tool_input)
     except TypeError as e:
         return {"ok": False, "error": f"bad arguments for {name}: {e}"}
-    except Exception as e:  # a buggy tool must not crash the whole review run
+    except Exception as e:  # noqa: BLE001 — a buggy tool must not crash the whole review run
         return {"ok": False, "error": f"{name} raised: {e}"}
 
 
@@ -84,6 +84,7 @@ def run_agent(diff: str, config: Config) -> dict:
     total_tokens = 0
     call_signatures: list[str] = []
     comments_posted = 0
+    nudged = False
 
     while True:
         if steps >= config.max_steps:
@@ -109,12 +110,32 @@ def run_agent(diff: str, config: Config) -> dict:
                 f"cumulative usage {total_tokens} > max_total_tokens={config.max_total_tokens}",
             )
 
-        messages.append({"role": "assistant", "content": response.content})
+        if response.content:
+            # Skip appending a genuinely empty assistant turn (no text, no tool call) —
+            # some providers produce these (see nudge below), and OpenAI-compatible APIs
+            # reject an assistant message with neither content nor tool_calls set.
+            messages.append({"role": "assistant", "content": response.content})
 
         if response.stop_reason != "tool_use":
             summary = "".join(
                 block.text for block in response.content if getattr(block, "type", None) == "text"
             )
+            if comments_posted == 0 and not summary.strip() and not nudged:
+                # Some providers occasionally end a turn with empty content and no tool
+                # call after a run of tool_use steps (observed with DeepSeek). One nudge
+                # back into the loop, rather than silently returning nothing.
+                nudged = True
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "You stopped without posting anything. Call post_review_comment "
+                            "exactly once now: a specific issue you found, or a summary saying "
+                            "the PR looks clean."
+                        ),
+                    }
+                )
+                continue
             return {
                 "ok": True,
                 "steps": steps,

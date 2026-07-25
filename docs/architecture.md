@@ -20,7 +20,8 @@
                ▼
 ┌────────────────────────────────────┐
 │  agent.run_agent(diff, config)     │
-│  • initial Tool Use call to Claude │
+│  • initial Tool Use call via       │
+│    LLMClient (DeepSeek/Anthropic)  │
 │  • loop:                           │
 │      LLM decides next tool         │
 │      run tool                      │
@@ -59,4 +60,9 @@ The implementations stay small. Composition is the LLM's job, not the tool's.
 | LangChain / LangGraph | Anthropic's Tool Use is enough for 5 tools. LangChain adds dependencies and abstractions for problems we don't have. |
 | Vector embedding over the codebase | Phase 1 doesn't need it; we use `grep_code` + `read_file`. |
 | Auto-apply fixes (write to PR branch) | One step too far. Comments are reversible; commits are not. |
-| Multiple LLM providers | Lock to Claude for clarity; add adapters later if needed. |
+
+## LLM providers
+
+`client.py` supports DeepSeek (default) and Anthropic, normalized to one response shape so
+`agent.py`'s loop and guardrails are provider-agnostic. See
+[ADR-0003](adr/0003-deepseek-provider-adapter.md) for why and how.

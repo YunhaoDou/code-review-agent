@@ -5,18 +5,19 @@ build-backend = "hatchling.build"
 [project]
 name = "code-review-agent"
 version = "0.0.1"
-description = "Multi-step code review agent built on Anthropic Tool Use, packaged as a GitHub Action"
+description = "Multi-step code review agent built on Anthropic/DeepSeek Tool Use, packaged as a GitHub Action"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [{ name = "Yunhao Dou" }]
-keywords = ["agent", "code-review", "anthropic", "claude", "github-action", "tool-use"]
+keywords = ["agent", "code-review", "anthropic", "claude", "deepseek", "github-action", "tool-use"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
     "anthropic>=0.30",
+    "openai>=1.30",
     "httpx>=0.27",
     "pydantic>=2.5",
     "pyyaml>=6.0",
