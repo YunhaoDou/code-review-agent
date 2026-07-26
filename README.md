@@ -88,7 +88,7 @@ Full usage in [docs/usage.md](docs/usage.md).
 | 1 | Tool Use loop wired to the 5 tools | ✅ done, unit-tested with a mocked Anthropic client |
 | 2 | Loop detection + token accounting | ✅ done — `max_steps`, per-turn + cumulative token budget, identical-call loop detection, all with tests proving they actually trigger |
 | 3 | Self-review (dogfood: this action reviews its own PRs) | ✅ done — [PR #2](https://github.com/YunhaoDou/code-review-agent/pull/2) added the DeepSeek provider, then the agent itself reviewed that PR live and posted 2 real comments, both fixed before merge |
-| 4 | Publish to GitHub Marketplace | ✅ done — tagged `v1.0.0`, published to the Marketplace under the `check-circle`/green branding |
+| 4 | Publish to GitHub Marketplace | [`v1.0.0`](https://github.com/YunhaoDou/code-review-agent/releases/tag/v1.0.0) tagged and released, repo public. Marketplace listing itself: ☐ open — GitHub only exposes this as a checkbox + Developer Agreement on the release page, not via API; needs a manual click by the repo owner |
 
 **What Phase 3 actually proved**: a real DeepSeek API key, a real PR, the full loop — diff fetch, multi-step tool use (`list_directory`, `read_file`, `grep_code`, `run_tests`), and `post_review_comment` posting to a live PR. It also surfaced two real provider quirks fixed along the way (see [ADR-0003](docs/adr/0003-deepseek-provider-adapter.md) and the PR #2 commit history): DeepSeek's actual model ids differ from the docs, and it occasionally ends a turn with no text and no tool call.
 
