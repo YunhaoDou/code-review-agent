@@ -1,4 +1,4 @@
-name: 'Code Review Agent'
+name: 'YunhaoDou Code Review Agent'
 description: 'Multi-step code review agent on Anthropic/DeepSeek Tool Use. Posts review comments on PRs automatically.'
 author: 'Yunhao Dou'
 branding:
