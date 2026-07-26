@@ -6,7 +6,7 @@
 
 > A multi-step code-review agent powered by Tool Use (DeepSeek by default, Anthropic optional). Drop it into any repo as a GitHub Action — PRs get reviewed automatically.
 
-**Status**: v1.0.0. Ran live against [PR #2](https://github.com/YunhaoDou/code-review-agent/pull/2) — real DeepSeek calls, real tool loop, real review comments posted — see [Roadmap](#roadmap).
+**Status**: v1.0.1, live on the [GitHub Marketplace](https://github.com/marketplace/actions/yunhaodou-code-review-agent). Ran live against [PR #2](https://github.com/YunhaoDou/code-review-agent/pull/2) — real DeepSeek calls, real tool loop, real review comments posted — see [Roadmap](#roadmap).
 
 ## What it does
 
@@ -88,7 +88,7 @@ Full usage in [docs/usage.md](docs/usage.md).
 | 1 | Tool Use loop wired to the 5 tools | ✅ done, unit-tested with a mocked Anthropic client |
 | 2 | Loop detection + token accounting | ✅ done — `max_steps`, per-turn + cumulative token budget, identical-call loop detection, all with tests proving they actually trigger |
 | 3 | Self-review (dogfood: this action reviews its own PRs) | ✅ done — [PR #2](https://github.com/YunhaoDou/code-review-agent/pull/2) added the DeepSeek provider, then the agent itself reviewed that PR live and posted 2 real comments, both fixed before merge |
-| 4 | Publish to GitHub Marketplace | [`v1.0.0`](https://github.com/YunhaoDou/code-review-agent/releases/tag/v1.0.0) tagged and released, repo public. Marketplace listing itself: ☐ open — GitHub only exposes this as a checkbox + Developer Agreement on the release page, not via API; needs a manual click by the repo owner |
+| 4 | Publish to GitHub Marketplace | ✅ done — live at [github.com/marketplace/actions/yunhaodou-code-review-agent](https://github.com/marketplace/actions/yunhaodou-code-review-agent) as [`v1.0.1`](https://github.com/YunhaoDou/code-review-agent/releases/tag/v1.0.1) (v1.0.0's action name collided with an existing Marketplace name, fixed in v1.0.1) |
 
 **What Phase 3 actually proved**: a real DeepSeek API key, a real PR, the full loop — diff fetch, multi-step tool use (`list_directory`, `read_file`, `grep_code`, `run_tests`), and `post_review_comment` posting to a live PR. It also surfaced two real provider quirks fixed along the way (see [ADR-0003](docs/adr/0003-deepseek-provider-adapter.md) and the PR #2 commit history): DeepSeek's actual model ids differ from the docs, and it occasionally ends a turn with no text and no tool call.
 
