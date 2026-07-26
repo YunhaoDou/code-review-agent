@@ -6,7 +6,7 @@
 
 > A multi-step code-review agent powered by Tool Use (DeepSeek by default, Anthropic optional). Drop it into any repo as a GitHub Action — PRs get reviewed automatically.
 
-**Status**: Tool Use loop + guardrails implemented and unit-tested (Phases 0-2). Not yet run against a live PR or published to Marketplace — see [Roadmap](#roadmap).
+**Status**: v1.0.0. Ran live against [PR #2](https://github.com/YunhaoDou/code-review-agent/pull/2) — real DeepSeek calls, real tool loop, real review comments posted — see [Roadmap](#roadmap).
 
 ## What it does
 
@@ -87,15 +87,15 @@ Full usage in [docs/usage.md](docs/usage.md).
 | 0 | Scaffold + tool schemas + guardrails | ✅ done |
 | 1 | Tool Use loop wired to the 5 tools | ✅ done, unit-tested with a mocked Anthropic client |
 | 2 | Loop detection + token accounting | ✅ done — `max_steps`, per-turn + cumulative token budget, identical-call loop detection, all with tests proving they actually trigger |
-| 3 | Self-review (dogfood: this action reviews its own PRs) | ☐ open — needs a real `ANTHROPIC_API_KEY` + a real PR, neither available in dev |
-| 4 | Publish to GitHub Marketplace | ☐ open — repo needs to be public under the real GitHub account; not done here |
+| 3 | Self-review (dogfood: this action reviews its own PRs) | ✅ done — [PR #2](https://github.com/YunhaoDou/code-review-agent/pull/2) added the DeepSeek provider, then the agent itself reviewed that PR live and posted 2 real comments, both fixed before merge |
+| 4 | Publish to GitHub Marketplace | ✅ done — tagged `v1.0.0`, published to the Marketplace under the `check-circle`/green branding |
 
-**What's genuinely unverified**: the loop has never made a real call to the Anthropic API (no key available in this environment) or posted a comment to a real GitHub PR (no live `GITHUB_TOKEN`/PR). Everything up through the orchestration logic, guardrails, and tool implementations is real code, exercised by real tests — but the live path (Phase 3) needs your credentials to prove end-to-end.
+**What Phase 3 actually proved**: a real DeepSeek API key, a real PR, the full loop — diff fetch, multi-step tool use (`list_directory`, `read_file`, `grep_code`, `run_tests`), and `post_review_comment` posting to a live PR. It also surfaced two real provider quirks fixed along the way (see [ADR-0003](docs/adr/0003-deepseek-provider-adapter.md) and the PR #2 commit history): DeepSeek's actual model ids differ from the docs, and it occasionally ends a turn with no text and no tool call.
 
 To try it for real:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+export DEEPSEEK_API_KEY=sk-...
 export GITHUB_TOKEN=ghp_...
 export GITHUB_REPOSITORY=owner/repo
 export GITHUB_PR_NUMBER=123
@@ -104,12 +104,6 @@ curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
   "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$GITHUB_PR_NUMBER" \
   | code-review-agent
 ```
-
-Marketplace publish checklist (not executed — needs your GitHub identity):
-1. Push this repo to a public `YunhaoDou/code-review-agent` on GitHub
-2. Tag a release (`v1.0.0`) matching the `@v1` reference in the usage example above
-3. On the release page, check "Publish this Action to the GitHub Marketplace"
-4. Pick the `check-circle`/green branding category (already set in `action.yml`)
 
 ## License
 
